@@ -1,0 +1,20 @@
+-- CREATE TABLE IF NOT EXISTS repositories (
+--   id TEXT PRIMARY KEY,
+--   name TEXT NOT NULL,
+--   full_name TEXT NOT NULL,
+--   owner TEXT NOT NULL,
+--   description TEXT,
+--   url TEXT NOT NULL,
+--   homepage_url TEXT,
+--   is_fork BOOLEAN,
+--   primary_language TEXT,
+--   stargazers_count INT,
+--   forks_count INT,
+--   watchers_count INT,
+--   issues_count INT,
+--   license TEXT,
+--   topics TEXT[],
+--   created_at TIMESTAMPTZ,
+--   updated_at TIMESTAMPTZ,
+--   pushed_at TIMESTAMPTZ
+-- );

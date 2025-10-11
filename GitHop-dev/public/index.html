@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Trending Repositories</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-6">
+
+  <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">🚀 Trending Repositories</h1>
+
+  <div id="repo-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+
+  <script>
+    async function fetchRepos() {
+      const res = await fetch('/repos');
+      const repos = await res.json();
+      const grid = document.getElementById('repo-grid');
+
+      repos.forEach(repo => {
+        const card = document.createElement('div');
+        card.className = "bg-white p-5 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300";
+
+        card.innerHTML = `
+          <h2 class="text-xl font-semibold text-blue-600 mb-1">${repo.full_name}</h2>
+          <p class="text-gray-600 mb-3">${repo.description ?? "No description"}</p>
+          <div class="flex justify-between items-center mb-3 text-sm text-gray-500">
+            <span>⭐ ${repo.stars_count}</span>
+            <span>🍴 ${repo.forks_count}</span>
+            <span>🐛 ${repo.open_issues_count}</span>
+          </div>
+          <div class="flex flex-wrap gap-2 mb-3">
+            ${repo.topics?.map(topic => `<span class="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded">${topic}</span>`).join("")}
+          </div>
+          <a href="${repo.html_url}" target="_blank" class="text-white bg-blue-600 px-4 py-2 rounded hover:bg-blue-700 transition">View on GitHub</a>
+        `;
+
+        grid.appendChild(card);
+      });
+    }
+
+    fetchRepos();
+  </script>
+</body>
+</html>
