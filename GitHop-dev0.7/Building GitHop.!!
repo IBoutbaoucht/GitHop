@@ -1,0 +1,180 @@
+You treat all people as Experts .!!
+
+for a dev , If there are no domains he is in , handle this , now it shows the default 3 with 0 score .
+
+0 Years Active : for raising stars
+
+news 
+developers :  BADGES , BADGES , EXPLORE BADGES !!
+a magazine or a talent agency.
+
+Instead of just listing "JavaScript Developers," you can categorize them into "Personas" based on the topics of the repositories they build and star. This makes the platform feel like a magazine or a talent agency.
+
+			show developers with certain badges .
+
+search by : language 	
+			topic
+
+
+			give : repos
+					devs
+
+
+Login 
+	Follwing 
+	Reactions to posts 
+
+
+
+Oussama : 
+
+
+
+
+Is the internet decentralized ? answer : yes and no
+
+
+
+
+In a shiny morning , you wake up , you brush your teeth , and take your breakfast , and you're ready to start working on your next big idea, 
+but there is something missing , you don't the idea , SO YOU'RE lost , the solution Git HOP : HIP HOP
+
+In the dev community , two things matter : 
+Code and people 
+
+
+
+
+
+News :  Maybe a Security Helper
+
+''''
+  Developers care deeply when a major library updates (e.g., "React v19.0 is out").
+
+
+  we need now to implement the developers side , the top developers and the growing once 
+
+
+
+
+FOr the REPOS PART , IN THE DETAILS , THE COMMUNITY LEADERS :
+
+	THEY ALL SHOW 30 Contributors , MEANINIG !! , Maybe show the total number of contributors .
+
+
+
+
+
+
+	backend-1  |   ❌ Error updating commit activity for Mr-sans-and-InitLoader-s-team/Escape-From-Duckov-Coop-Mod-Preview: Error: Failed to fetch commit activity: 404 Not Found
+
+	backend-1  |   ❌ Error updating contributors for Mr-sans-and-InitLoader-s-team/Escape-From-Duckov-Coop-Mod-Preview: Failed to fetch contributors: 404 Not Found
+
+
+	Show Language Expertise for developer + favorite ones 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	  // Helper: Fetch Deep Stats (Languages & Activity)
+  private async fetchAndSaveRepoStats(githubId: string, fullName: string): Promise<void> {
+      const [owner, name] = fullName.split('/');
+      
+      // GraphQL Query for Languages and Commit History
+      const query = gql`
+        query RepoDetails($owner: String!, $name: String!) {
+          repository(owner: $owner, name: $name) {
+            languages(first: 10, orderBy: {field: SIZE, direction: DESC}) {
+              edges { size, node { name } }
+              totalSize
+            }
+            defaultBranchRef {
+              target {
+                ... on Commit {
+                  history(first: 1) { totalCount } 
+                }
+              }
+            }
+            releases(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {
+               totalCount
+               nodes { tagName, publishedAt }
+            }
+          }
+        }
+      `;
+
+      let data: any;
+      try {
+        data = await this.graphqlClient.request(query, { owner, name });
+      } catch (e) { return; } // Repo might be deleted or private
+
+      const repo = data.repository;
+      if (!repo) return;
+
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+
+        // 1. Save Languages
+        if (repo.languages?.edges) {
+            await client.query('DELETE FROM repository_languages WHERE repo_github_id = $1', [githubId]);
+            for (const lang of repo.languages.edges) {
+                const percentage = repo.languages.totalSize > 0 ? (lang.size / repo.languages.totalSize) * 100 : 0;
+                await client.query(
+                    `INSERT INTO repository_languages (repo_github_id, language_name, bytes_count, percentage)
+                     VALUES ($1, $2, $3, $4)`,
+                    [githubId, lang.node.name, lang.size, percentage]
+                );
+            }
+        }
+
+        // 2. Save Stats
+        const commits = repo.defaultBranchRef?.target?.history?.totalCount || 0;
+        const releases = repo.releases?.totalCount || 0;
+        const latestRelease = repo.releases?.nodes?.[0];
+
+        // Simple Activity Score Calculation
+        const activityScore = Math.log10(commits + 1) * 20 + (releases * 5);
+
+        await client.query(
+            `INSERT INTO repository_stats (
+                repo_github_id, commits_last_year, total_releases, 
+                latest_release_tag, latest_release_date, activity_score, calculated_at
+             ) VALUES ($1, $2, $3, $4, $5, $6, NOW())
+             ON CONFLICT (repo_github_id) DO UPDATE SET
+                commits_last_year = EXCLUDED.commits_last_year,
+                activity_score = EXCLUDED.activity_score,
+                calculated_at = NOW()`,
+            [githubId, commits, releases, latestRelease?.tagName, latestRelease?.publishedAt, activityScore]
+        );
+
+        await client.query('COMMIT');
+      } catch (e) {
+        await client.query('ROLLBACK');
+        throw e;
+      } finally {
+        client.release();
+      }
+  }
