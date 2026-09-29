@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+**/node_modules/
+**/dist/
+**/.wrangler/
+**/.git/
+**/*.log
+.ssh/
+**/gcp-key.json
+**/*private*.key
+**/*.pem

@@ -1,0 +1,38 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: github_trending
+      POSTGRES_USER: githop
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/database.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U githop -d github_trending"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    environment:
+      GITHUB_TOKEN: ${GITHUB_TOKEN:?Set GITHUB_TOKEN in .env}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-}
+      SYNC_DATA_ON_STARTUP: ${SYNC_DATA_ON_STARTUP:-false}
+      WARMUP_EMBEDDINGS: ${WARMUP_EMBEDDINGS:-false}
+      PGHOST: db
+      PGPORT: "5432"
+      PGDATABASE: github_trending
+      PGUSER: githop
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      PORT: "4000"
+    ports:
+      - "127.0.0.1:4000:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
