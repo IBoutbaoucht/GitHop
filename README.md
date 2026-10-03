@@ -89,4 +89,4 @@ No keys or credentials are included. Operator-only POST endpoints require `ADMIN
 
 ---
 
-<p align="center"><sub>MIT License · Built by <a href="https://github.com/IBoutbaoucht">Imad Boutbaoucht</a></sub></p>
+<p align="center"><sub>MIT License · <a href="LICENSE">LICENSE</a></sub></p>
